@@ -1,0 +1,299 @@
+/* ——— Ana sayfa: başlık, alışveriş düğmesi, kısa üst kart, satırlar ——— */
+.home-head--bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.home-head__text {
+  flex: 1;
+  min-width: 0;
+}
+.shop-btn {
+  position: relative;
+  margin-top: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.shop-btn__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1;
+  border: 2px solid var(--bg);
+}
+
+/* Üst kart: daha kısa, liste daha erken görünsün. */
+.hero {
+  padding: 14px 0 12px;
+  margin-bottom: 16px;
+}
+.hero--calm {
+  padding-bottom: 14px;
+}
+.hero::after {
+  width: 120px;
+  height: 120px;
+  right: -30px;
+  top: -40px;
+}
+.hero__text {
+  padding: 0 16px;
+}
+.hero__title {
+  font-size: 1.1875rem;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+.hero__sub {
+  margin-top: 4px;
+  font-size: 0.8438rem;
+}
+.hero__alert {
+  margin-top: 6px;
+}
+.avatars {
+  margin: 8px 16px 0;
+  gap: 8px;
+}
+.avatars__item {
+  width: 30px;
+  height: 30px;
+  border-width: 2px;
+  margin-left: -8px;
+  font-size: 0.6875rem;
+}
+.avatars__item img {
+  width: 20px;
+  height: 20px;
+}
+.avatars__names {
+  font-size: 0.8125rem;
+  -webkit-line-clamp: 1;
+}
+.hero__cta {
+  margin: 10px 12px 0;
+  width: calc(100% - 24px);
+  padding: 8px 12px;
+  min-height: 44px;
+  border-radius: 14px;
+}
+
+.legend-card {
+  margin-bottom: 14px;
+}
+
+/* Satır: ad ve kalan süre en okunur bilgi. */
+.item__name {
+  font-size: 1.0625rem;
+}
+.item__meta {
+  font-size: 0.75rem;
+}
+.item__meta-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item__when {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  margin-left: auto;
+}
+.days__big {
+  font-size: 1.375rem;
+}
+.days--today .days__big,
+.days--soon .days__big {
+  font-size: 1.0625rem;
+}
+.est-tag {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px dashed currentColor;
+  color: var(--ink-3);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+.item__quick {
+  min-width: 60px;
+  max-width: 72px;
+  min-height: 44px;
+  padding: 4px 4px;
+  gap: 1px;
+  line-height: 1.15;
+}
+.item__quick svg {
+  margin-bottom: 2px;
+}
+.item__quick-line {
+  display: block;
+  white-space: nowrap;
+}
+
+/* ——— Ürün ayrıntıları ——— */
+.detail__source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.facts .fact--edit {
+  position: relative;
+}
+.fact--edit.is-active {
+  background: var(--brand-soft);
+}
+.fact__btn {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 6px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+/* Bütün kutu dokunulabilir (≥44 px). */
+.fact__btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+}
+.fact__btn:focus-visible {
+  outline: none;
+}
+.fact__btn:focus-visible::after {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+.fact__edit {
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.date-edit__result {
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+.date-edit__hint {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.date-edit__row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.date-edit .segmented__opt:not(.is-active) {
+  color: var(--ink-2);
+}
+.date-edit .segmented {
+  background: var(--surface);
+}
+.date-edit .segmented__opt.is-active {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.level__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.level__head .field__label {
+  margin: 0;
+}
+.level__now {
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+.level__note {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+}
+.detail__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+}
+/* Klavye açılınca odaktaki alan ve altındaki "Tamam" görünür kalsın. */
+.sheet input:focus {
+  scroll-margin-top: 80px;
+  scroll-margin-bottom: 140px;
+}
+.sheet {
+  scroll-padding-bottom: 96px;
+}
+
+@media (max-width: 360px) {
+  .item__main {
+    gap: 8px;
+    padding-left: 8px;
+  }
+  .item__quick {
+    min-width: 54px;
+  }
+  .days {
+    min-width: 56px;
+    padding: 5px 6px;
+  }
+  .hero__title {
+    font-size: 1.0938rem;
+  }
+}
+
+/* Dar ekranda halka küçülünce (screens.css ≤330 px) çizim ve görsel de küçülsün; ad üstüne binmesin. */
+@media (max-width: 330px) {
+  .item .food-ring > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .item .food-ring__inner {
+    transform: scale(0.78);
+  }
+}
+/* Ek bilgi kesilmesin: gerekirse iki satıra iner. */
+.item__meta {
+  white-space: normal;
+  align-items: flex-start;
+}
+.item__meta-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.fact__sub {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}

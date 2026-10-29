@@ -1,0 +1,285 @@
+/* add: Ürün ekle ekranı */
+
+/*
+ * Katalog kartı: köşedeki + kendi 44 px hedefidir. Ayrıntı düğmesi o köşeyi kapsamaz (clip-path),
+ * görsel dokunmayı geçirir: iki hedef üst üste binmez, + yanına dokunmak ayrıntıyı açmaz.
+ */
+.catalog-tile {
+  min-height: 44px;
+}
+.catalog-tile__main {
+  min-height: 44px;
+  clip-path: polygon(0 0, calc(100% - 44px) 0, calc(100% - 44px) 44px, 100% 44px, 100% 100%, 0 100%);
+}
+.catalog-tile__main:focus-visible {
+  outline-offset: -3px;
+}
+.catalog-tile__space {
+  display: block;
+  width: 60px;
+  height: 60px;
+  flex: none;
+}
+.catalog-tile__img {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  margin-left: -30px;
+  pointer-events: none;
+  transition: transform 0.15s var(--ease);
+}
+.catalog-tile:has(.catalog-tile__main:active) .catalog-tile__img {
+  transform: scale(0.93);
+}
+.catalog-tile__quick,
+.catalog-tile__quick.is-added {
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 2px 2px 0 0;
+  border: 0;
+  border-radius: 0 18px 0 0;
+  background: none;
+  box-shadow: none;
+  color: var(--brand);
+  animation: none;
+}
+.catalog-tile__quick::after {
+  content: none;
+}
+.catalog-tile__quick:active {
+  transform: none;
+}
+.catalog-tile__quick:focus-visible {
+  outline-offset: -3px;
+}
+.catalog-tile__dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--brand);
+  border: 1.5px solid var(--brand-soft);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition: transform 0.15s var(--ease);
+}
+.catalog-tile__quick:active .catalog-tile__dot {
+  transform: scale(0.85);
+}
+.catalog-tile__quick.is-added .catalog-tile__dot {
+  background: var(--brand);
+  color: var(--on-brand);
+  border-color: var(--brand);
+  animation: pop 0.35s var(--ease);
+}
+
+/* Ayrıntı formu */
+.draft {
+  min-width: 0;
+}
+.qty-extra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+.qty-extra .qty-chips {
+  margin-top: 0;
+  margin-left: auto;
+}
+.qty-extra .qty-chips .mini-chip {
+  min-width: 40px;
+  padding: 0 10px;
+}
+.unit-toggle {
+  min-height: 44px;
+  padding: 0 2px;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--ink-2);
+  text-align: left;
+}
+.unit-toggle b {
+  color: var(--ink);
+}
+.unit-toggle__act {
+  color: var(--brand);
+  font-weight: 750;
+}
+.unit-pick {
+  margin-top: 8px;
+}
+.draft__collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-align: left;
+}
+.draft__collapsed b {
+  color: var(--ink);
+}
+
+.opened-box {
+  margin-bottom: 16px;
+}
+.opened-box.is-on {
+  background: var(--surface-2);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px 14px;
+}
+.opened-box__body {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+}
+.opened-box.is-on .segmented {
+  background: var(--surface-3);
+}
+.opened-box__level {
+  margin-top: 14px;
+}
+.opened-box__split {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.8438rem;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.useby__note {
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0 0 4px;
+}
+.pkg-kind {
+  margin: 4px 0 10px;
+}
+.pkg-kind .mini-chip {
+  background: var(--surface);
+  text-align: left;
+  line-height: 1.2;
+  padding: 6px 12px;
+}
+.pkg-kind .mini-chip.is-active {
+  background: var(--brand);
+}
+.pkg-kind__note {
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+.pkg-kind__note.is-warn {
+  color: var(--today);
+  font-weight: 700;
+}
+
+/* Kaydet düğmesi panelin altına yapışır: uzun formda ve klavye açıkken hep erişilebilir. */
+.draft__footer {
+  position: sticky;
+  bottom: calc(-20px - var(--safe-b));
+  z-index: 2;
+  margin: 0 -20px calc(-20px - var(--safe-b));
+  padding: 10px 20px calc(20px + var(--safe-b));
+  background: var(--surface);
+  box-shadow: 0 -10px 14px -12px rgba(23, 32, 27, 0.25);
+}
+/* Klavye açıkken (bkz. useKeyboardInset) panel klavyenin üstünde kalır. */
+.sheet:has(> .draft) {
+  margin-bottom: var(--kb, 0px);
+  max-height: calc(100dvh - 96px - var(--safe-t) - var(--kb, 0px));
+}
+.sheet.has-kb:has(> .draft) {
+  max-height: calc(100dvh - 8px - var(--kb, 0px));
+  padding-bottom: 20px;
+}
+.sheet.has-kb .draft__footer {
+  bottom: -20px;
+  margin-bottom: -20px;
+  padding-bottom: 12px;
+}
+
+@media (max-width: 360px) {
+  .sheet:has(> .draft) {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .draft__footer {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* "Tamam" gizliyken de yerini tutar: ilk eklemeden sonra katalog parmağın altında kaymaz. */
+.add__done {
+  flex: none;
+  white-space: nowrap;
+}
+.add__done:not(.is-visible) {
+  position: static;
+  visibility: hidden;
+}
+@media (max-width: 360px) {
+  /* Çok dar ekranda başlıkta yer açılır; uçan ürün "Tamam"a iner. */
+  .add__head .add__mini {
+    display: none;
+  }
+}
+.add__title h1 {
+  overflow-wrap: normal;
+  font-size: clamp(1.05rem, 5.4vw, 1.375rem);
+}
+.draft__warn {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--warn-soft, var(--surface-2));
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+/* Başlık ve alt yazı tek satır: ilk eklemeden sonra yazı değişince başlık yüksekliği (ve katalog) kaymaz. */
+.add__title {
+  min-width: 0;
+}
+.add__title h1,
+.add__title p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Giriş animasyonu bitene kadar katalog dokunuş almaz (çift dokunuş istemeden ürün eklemesin). */
+.add:not(.add--ready) .add__panel {
+  pointer-events: none;
+}
+/* Büyük yazıda alttaki bildirim (iki satır) son kartları örtmesin. */
+.add__scroll {
+  padding-bottom: 170px;
+}

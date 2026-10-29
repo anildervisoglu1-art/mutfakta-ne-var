@@ -1,0 +1,146 @@
+/* cook: Tarifler ekranı (Cook.tsx) */
+
+/* Süzgeç: Elimdekilerle / Az eksiği olanlar */
+.cook-filter {
+  margin-bottom: 14px;
+  /* Büyük yazıda ikinci süzgeç kesilmesin: alt satıra iner. */
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.cook-empty {
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+/* Kart başlığı: eksik sayısı */
+.pill--miss {
+  background: var(--soon-soft);
+  color: var(--soon);
+}
+
+/* Eksik malzeme çipi: görünür "eksik" etiketi */
+.ing--missing .ing__tag {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--soon);
+}
+
+/* Açık kart: gerekli eksikler ve listeye ekle */
+.recipe__body .recipe__need {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1.5px dashed var(--surface-3);
+  border-radius: 14px;
+  padding: 10px;
+}
+.recipe__body .recipe__need-text {
+  background: none;
+  padding: 0 2px;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+.recipe__body .recipe__ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fresh);
+  font-weight: 700;
+}
+.recipe__body .recipe__staples {
+  font-size: 0.75rem;
+}
+.recipe__body .recipe__missing strong {
+  color: var(--ink-2);
+}
+
+/* "Bunu pişirdim" paneli */
+.cooked-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+}
+.cooked-row.is-changed {
+  border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+}
+.cooked-row__top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.cooked-row__top .use-row__name {
+  min-width: 120px;
+}
+.cooked-row__change {
+  font-variant-numeric: tabular-nums;
+}
+.cooked-row.is-changed .cooked-row__change {
+  color: var(--brand-strong);
+  font-weight: 700;
+}
+.cooked-row__step {
+  margin-left: auto;
+}
+.cooked-row__step .stepper {
+  background: var(--surface);
+}
+.cooked-choice {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 4px;
+}
+.cooked-choice__opt {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  line-height: 1.15;
+}
+.cooked-choice__opt.is-active {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.cooked-choice__opt:disabled {
+  opacity: 0.4;
+}
+.cooked-left {
+  min-height: 44px;
+  padding: 0;
+  background: none;
+}
+.cooked-left__qty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  padding-left: 4px;
+}
+.cooked-left__qty .stepper {
+  background: var(--surface);
+}
+.cooked-summary {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-align: center;
+  margin: -6px 0 10px;
+}

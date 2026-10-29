@@ -1,0 +1,100 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f6f1;
+  --surface: #ffffff;
+  --surface-2: #eef0e9;
+  --surface-3: #e4e7de;
+  --ink: #17201b;
+  --ink-2: #4f5b54;
+  --ink-3: #626c66;
+  --line: #e2e5dc;
+  --brand: #1d7a4e;
+  --brand-strong: #145c3a;
+  --brand-soft: #dcefe2;
+  --on-brand: #ffffff;
+
+  --fresh: #1f7a49;
+  --fresh-soft: #e0f2e6;
+  --soon: #9a5c00;
+  --soon-soft: #fdefd6;
+  --today: #b03a23;
+  --today-soft: #fde3dd;
+  --expired: #5c635e;
+  --expired-soft: #eceeea;
+
+  --cat-meyve: #ffe3df;
+  --cat-sebze: #e1f2dc;
+  --cat-sut: #fff1cf;
+  --cat-et: #fbe0d8;
+  --cat-yemek: #f0e5f7;
+  --cat-firin: #f6e6cf;
+  --cat-icecek: #dcf0f6;
+  --cat-sos: #fde7cf;
+  --cat-kuru: #f3ecd9;
+  --cat-kuruyemis: #f1e4d6;
+  --cat-temel: #e9f0dc;
+  --cat-atistirmalik: #fbe4ec;
+  --cat-donuk: #e0eefb;
+  --frozen: #2d6a9f;
+  --frozen-soft: #e0eefb;
+
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 1px 2px rgba(23, 32, 27, 0.06), 0 1px 1px rgba(23, 32, 27, 0.04);
+  --shadow-md: 0 6px 20px -8px rgba(23, 32, 27, 0.18), 0 2px 6px -2px rgba(23, 32, 27, 0.06);
+  --shadow-lg: 0 24px 48px -16px rgba(23, 32, 27, 0.28);
+  --font: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --nav-h: 76px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #101513;
+    --surface: #18201c;
+    --surface-2: #202a25;
+    --surface-3: #2a3530;
+    --ink: #eef2ee;
+    --ink-2: #b4beb7;
+    --ink-3: #95a09a;
+    --line: #2a3430;
+    --brand: #4cc489;
+    --brand-strong: #6fd6a2;
+    --brand-soft: #1d3a2c;
+    --on-brand: #06231a;
+
+    --fresh: #5fcf8f;
+    --fresh-soft: #1b3326;
+    --soon: #f0b04a;
+    --soon-soft: #3a2d15;
+    --today: #ff7a63;
+    --today-soft: #3f211b;
+    --expired: #a4aca6;
+    --expired-soft: #262d29;
+
+    --cat-meyve: #3a2524;
+    --cat-sebze: #213325;
+    --cat-sut: #38321f;
+    --cat-et: #3a2620;
+    --cat-yemek: #31263a;
+    --cat-firin: #372c1f;
+    --cat-icecek: #1d3239;
+    --cat-sos: #3a2c1e;
+    --cat-kuru: #34301f;
+    --cat-kuruyemis: #372b22;
+    --cat-temel: #2b3322;
+    --cat-atistirmalik: #3a2430;
+    --cat-donuk: #1e2d3b;
+    --frozen: #8cc4f2;
+    --frozen-soft: #1e2d3b;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px -10px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.7);
+  }
+}
