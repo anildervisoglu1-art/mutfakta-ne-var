@@ -1056,6 +1056,44 @@ function DraftForm({ draft, setDraft, onSubmit, day }: { draft: Draft; setDraft:
         </div>
       )}
 
+      {/* İsteğe bağlı: ürünü hangi gün ne için kullanacağı ("Pazar: ıspanak yemeği"); o gün hatırlatılır. */}
+      <div className="field draft__plan">
+        {planOpen ? (
+          <>
+            <span className="field__label">
+              Ne zaman tüketeceksin?<small>Seçtiğin gün ana ekranda hatırlatırız. İstemezsen boş bırak.</small>
+            </span>
+            <PlanFields
+              title={draft.planTitle ?? ''}
+              setTitle={(planTitle) => setDraft({ ...draft, planTitle })}
+              day={draft.planDay ?? null}
+              setDay={(d) => setDraft({ ...draft, planDay: d ?? undefined })}
+              ideas={planIdeas({ catalogId: c?.id, name: draft.name || c?.name || '', category: draft.category })}
+              today={ref}
+              warning={draft.planDay ? planWarning(draft.planDay, { id: '', name: draft.name, img: draft.img, category: draft.category, storage: draft.storage, quantity: 1, addedAt: ref, useBy: dates.useBy, opened: !!opened, dateSource: draft.dateSource, catalogId: c?.id }, ref) : undefined}
+            />
+            <button
+              type="button"
+              className="link-btn link-btn--muted"
+              onClick={() => {
+                setDraft({ ...draft, planTitle: undefined, planDay: undefined });
+                setPlanOpen(false);
+              }}
+            >
+              Planı kaldır
+            </button>
+          </>
+        ) : (
+          <button type="button" className="draft__collapsed" aria-expanded={false} onClick={() => setPlanOpen(true)}>
+            <span>
+              <b>Ne zaman tüketeceksin?</b>
+            </span>
+            <span className="unit-toggle__act">tarih seç</span>
+          </button>
+        )}
+      </div>
+
+
       {showOpened && (
         <div className={`opened-box ${opened ? 'is-on' : ''}`}>
           <div className="field--row">
@@ -1183,43 +1221,6 @@ function DraftForm({ draft, setDraft, onSubmit, day }: { draft: Draft; setDraft:
           {!c && <p className="tip">Bu ürünü tanımıyoruz; süre, türüne göre temkinli bir tahmin. Paketinde tarih varsa onu gir.</p>}
         </div>
       )}
-
-      {/* İsteğe bağlı: ürünü hangi gün ne için kullanacağı ("Pazar: ıspanak yemeği"); o gün hatırlatılır. */}
-      <div className="field draft__plan">
-        {planOpen ? (
-          <>
-            <span className="field__label">
-              Ne zaman kullanacaksın?<small>O gün ana ekranda hatırlatırız. İstemezsen boş bırak.</small>
-            </span>
-            <PlanFields
-              title={draft.planTitle ?? ''}
-              setTitle={(planTitle) => setDraft({ ...draft, planTitle })}
-              day={draft.planDay ?? null}
-              setDay={(d) => setDraft({ ...draft, planDay: d ?? undefined })}
-              ideas={planIdeas({ catalogId: c?.id, name: draft.name || c?.name || '', category: draft.category })}
-              today={ref}
-              warning={draft.planDay ? planWarning(draft.planDay, { id: '', name: draft.name, img: draft.img, category: draft.category, storage: draft.storage, quantity: 1, addedAt: ref, useBy: dates.useBy, opened: !!opened, dateSource: draft.dateSource, catalogId: c?.id }, ref) : undefined}
-            />
-            <button
-              type="button"
-              className="link-btn link-btn--muted"
-              onClick={() => {
-                setDraft({ ...draft, planTitle: undefined, planDay: undefined });
-                setPlanOpen(false);
-              }}
-            >
-              Planı kaldır
-            </button>
-          </>
-        ) : (
-          <button type="button" className="draft__collapsed" aria-expanded={false} onClick={() => setPlanOpen(true)}>
-            <span>
-              Ne zaman kullanacaksın? · <b>Plan yok</b>
-            </span>
-            <span className="unit-toggle__act">plan ekle</span>
-          </button>
-        )}
-      </div>
 
       <div className="draft__footer">
         {/* Açılınca ya da tarih girilince son gün geçmişe düştüyse kaydetmeden önce söylenir. */}
