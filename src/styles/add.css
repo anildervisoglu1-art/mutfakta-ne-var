@@ -283,3 +283,18 @@
 .add__scroll {
   padding-bottom: 170px;
 }
+/* Ekleme formunda isteğe bağlı plan */
+.draft__plan .plan-form__ideas,
+.draft__plan .plan-form__days {
+  margin-top: 4px;
+}
+.draft__plan .link-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.draft__plan {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}

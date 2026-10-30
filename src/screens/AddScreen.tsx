@@ -9,10 +9,12 @@ import { MAX_QTY, useFridge, type NewItem } from '../store/useFridge';
 import { FoodTile } from '../components/Food';
 import { Fridge } from '../components/Fridge';
 import { DayChoice } from '../components/DayChoice';
+import { PlanFields } from '../components/PlanForm';
+import { planDayLabel, planIdeas, planWarning } from '../lib/plans';
 import { Icon, type IconName } from '../components/Icon';
 import { Sheet } from '../components/Sheet';
 import { Segmented, Stepper, Toggle } from '../components/Stepper';
-import { toast } from '../components/Toast';
+import { toast, useToastStore } from '../components/Toast';
 import { useReducedMotion } from '../lib/useReducedMotion';
 import { useToday } from '../lib/useToday';
 import type { CatalogItem, CategoryId, DateSource, DayString, FridgeItem, HistoryEntry, Level, PackageKind, StorageId, Unit } from '../types';
@@ -46,6 +48,9 @@ type Draft = {
   packageKind: PackageKind;
   /** Ad kullanıcının yazdığı (katalogla eşleşse de değiştirilebilir). */
   nameEditable: boolean;
+  /** İsteğe bağlı plan: "Pazar günü ıspanak yemeği yapacağım" (ürünle birlikte kaydedilir). */
+  planTitle?: string;
+  planDay?: DayString;
   /** Adından tahmin edildi (kullanıcı "Bu değil" diyebilir). */
   guessed?: boolean;
   /** Türü tahmin edilemedi: kullanıcıdan seçmesi istenir. */
@@ -497,7 +502,18 @@ export function AddScreen({ onClose, preset }: { onClose: () => void; preset?: A
       useFridge.getState().removeShopping(row.id);
       restoreRow = () => useFridge.setState((s) => (s.shopping.some((x) => x.id === row.id) ? s : { shopping: [...s.shopping.slice(0, idx), row, ...s.shopping.slice(idx)] }));
     }
-    addAndAnimate(rows, lastTile.current, undefined, false, restoreRow);
+    // İsteğe bağlı plan ürünle birlikte kaydedilir; "Geri al" ürünü, listedeki satırı ve planı birlikte geri alır.
+    let planId: string | undefined;
+    const results = addAndAnimate(rows, lastTile.current, undefined, false, () => {
+      restoreRow?.();
+      if (planId) useFridge.getState().removePlan(planId);
+    });
+    if (d.planTitle?.trim() && d.planDay && results?.length) {
+      const target = (results.find((r) => r.input.opened) ?? results[0]!).item;
+      planId = useFridge.getState().addPlan({ day: d.planDay, title: d.planTitle, itemId: target.id, catalogId: target.catalogId, name: target.name, img: target.img, category: target.category }).id;
+      const note = ` · Plan: ${planDayLabel(d.planDay, today())}, ${d.planTitle.trim()}`;
+      useToastStore.setState((st) => (st.toast ? { toast: { ...st.toast, text: st.toast.text + note } } : st));
+    }
   };
 
   /** Tek dokunuşla ekle: varsayılan yer ve birim, 1 tane, ortalama süre ("dünkü çorba" ise dün pişmiş). */
@@ -546,7 +562,7 @@ export function AddScreen({ onClose, preset }: { onClose: () => void; preset?: A
     if (done.length === 0) {
       const r = results[0]!;
       toast({ text: `${r.item.name}: en fazla ${qtyText(MAX_QTY, unit)} tutabiliriz; zaten ${qtyText(r.item.quantity, unit)} var.`, top: false });
-      return;
+      return results;
     }
     const key = recentKey ?? first.catalogId ?? done[0]!.item.id;
     const where = STORAGE_DATIVE[first.storage];
@@ -583,7 +599,7 @@ export function AddScreen({ onClose, preset }: { onClose: () => void; preset?: A
         },
         top: false,
       });
-      return;
+      return results;
     }
     // Tek dokunuşla eklenenler birikir: bildirim, bu açılıştaki tüm hızlı eklemeleri birlikte geri alır.
     session.current = [...session.current, ...entries];
@@ -597,6 +613,7 @@ export function AddScreen({ onClose, preset }: { onClose: () => void; preset?: A
         session.current = session.current.filter((e) => !list.includes(e));
       },
     });
+    return results;
   };
 
   const count = new Set(addedIds).size;
@@ -811,6 +828,7 @@ function DraftForm({ draft, setDraft, onSubmit, day }: { draft: Draft; setDraft:
   const [pickImage, setPickImage] = useState(false);
   const [unitOpen, setUnitOpen] = useState(false);
   const [boughtOpen, setBoughtOpen] = useState(!!draft.boughtAt);
+  const [planOpen, setPlanOpen] = useState(!!draft.planDay);
   const formRef = useRef<HTMLFormElement>(null);
   useKeyboardInset(formRef);
   const ref = day;
@@ -1165,6 +1183,43 @@ function DraftForm({ draft, setDraft, onSubmit, day }: { draft: Draft; setDraft:
           {!c && <p className="tip">Bu ürünü tanımıyoruz; süre, türüne göre temkinli bir tahmin. Paketinde tarih varsa onu gir.</p>}
         </div>
       )}
+
+      {/* İsteğe bağlı: ürünü hangi gün ne için kullanacağı ("Pazar: ıspanak yemeği"); o gün hatırlatılır. */}
+      <div className="field draft__plan">
+        {planOpen ? (
+          <>
+            <span className="field__label">
+              Ne zaman kullanacaksın?<small>O gün ana ekranda hatırlatırız. İstemezsen boş bırak.</small>
+            </span>
+            <PlanFields
+              title={draft.planTitle ?? ''}
+              setTitle={(planTitle) => setDraft({ ...draft, planTitle })}
+              day={draft.planDay ?? null}
+              setDay={(d) => setDraft({ ...draft, planDay: d ?? undefined })}
+              ideas={planIdeas({ catalogId: c?.id, name: draft.name || c?.name || '', category: draft.category })}
+              today={ref}
+              warning={draft.planDay ? planWarning(draft.planDay, { id: '', name: draft.name, img: draft.img, category: draft.category, storage: draft.storage, quantity: 1, addedAt: ref, useBy: dates.useBy, opened: !!opened, dateSource: draft.dateSource, catalogId: c?.id }, ref) : undefined}
+            />
+            <button
+              type="button"
+              className="link-btn link-btn--muted"
+              onClick={() => {
+                setDraft({ ...draft, planTitle: undefined, planDay: undefined });
+                setPlanOpen(false);
+              }}
+            >
+              Planı kaldır
+            </button>
+          </>
+        ) : (
+          <button type="button" className="draft__collapsed" aria-expanded={false} onClick={() => setPlanOpen(true)}>
+            <span>
+              Ne zaman kullanacaksın? · <b>Plan yok</b>
+            </span>
+            <span className="unit-toggle__act">plan ekle</span>
+          </button>
+        )}
+      </div>
 
       <div className="draft__footer">
         {/* Açılınca ya da tarih girilince son gün geçmişe düştüyse kaydetmeden önce söylenir. */}

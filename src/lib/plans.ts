@@ -29,8 +29,8 @@ export function planWarning(day: DayString, item: FridgeItem | undefined, ref: D
 }
 
 /** Ne yapılacağı için öneriler: bu ürünü kullanan tarifler, sonra ürüne göre genel seçenekler. */
-export function planIdeas(item: FridgeItem): string[] {
-  const key = recipeKey(item);
+export function planIdeas(item: Pick<FridgeItem, 'name' | 'category'> & Partial<Pick<FridgeItem, 'catalogId'>>): string[] {
+  const key = recipeKey(item as FridgeItem);
   const recipes = key ? RECIPES.filter((r) => r.needs.some((n) => (Array.isArray(n) ? n.includes(key) : n === key))).map((r) => r.name) : [];
   const generic: Record<string, string[]> = {
     et: ['Kavurma', 'Izgara', 'Fırında'],

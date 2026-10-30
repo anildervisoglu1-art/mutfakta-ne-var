@@ -30,8 +30,6 @@ export function PlanForm({
 }) {
   const [title, setTitle] = useState(defaultTitle);
   const [day, setDay] = useState<DayString | null>(null);
-  const [picking, setPicking] = useState(false);
-  const days = nextDays(today);
   const warning = day ? planWarning(day, item, today) : undefined;
   const who = item ?? subject;
 
@@ -45,6 +43,36 @@ export function PlanForm({
 
   return (
     <div className="plan-form">
+      <PlanFields title={title} setTitle={setTitle} day={day} setDay={setDay} ideas={ideas} today={today} warning={warning} />
+      <button type="button" className="btn btn--primary btn--lg btn--block" disabled={!day || !title.trim()} onClick={save}>
+        <Icon name="calendar" size={20} /> {day ? `${planDayLabel(day, today)} için planla` : 'Gün seç'}
+      </button>
+    </div>
+  );
+}
+
+/** Ne yapılacak + hangi gün alanları (plan formu ve ekleme formu ortak kullanır). */
+export function PlanFields({
+  title,
+  setTitle,
+  day,
+  setDay,
+  ideas,
+  today,
+  warning,
+}: {
+  title: string;
+  setTitle: (v: string) => void;
+  day: DayString | null;
+  setDay: (d: DayString | null) => void;
+  ideas: string[];
+  today: DayString;
+  warning?: string;
+}) {
+  const [picking, setPicking] = useState(false);
+  const days = nextDays(today);
+  return (
+    <>
       <label className="field">
         <span className="field__label">Ne yapacaksın?</span>
         <input id="plan-title" className="input" value={title} maxLength={60} placeholder="Örn. Ispanak yemeği, kavurma" onChange={(e) => setTitle(e.target.value)} enterKeyHint="done" />
@@ -101,10 +129,6 @@ export function PlanForm({
           <span>{warning}</span>
         </p>
       )}
-
-      <button type="button" className="btn btn--primary btn--lg btn--block" disabled={!day || !title.trim()} onClick={save}>
-        <Icon name="calendar" size={20} /> {day ? `${planDayLabel(day, today)} için planla` : 'Gün seç'}
-      </button>
-    </div>
+    </>
   );
 }
