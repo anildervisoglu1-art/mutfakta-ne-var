@@ -18,6 +18,24 @@ window.addEventListener('storage', (e) => {
 });
 // Tarayıcı (özellikle iOS Safari) yerel veriyi kendiliğinden silmesin.
 void navigator.storage?.persist?.().catch(() => undefined);
+// Ana ekrandaki uygulama (iOS) arka plandan dönünce yeniden yüklenmez; güncellemeyi her öne gelişte kontrol et.
+// Yeni sürüm bulunursa otomatik güncelleme sayfayı yeniler (veri korunur).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !navigator.onLine) return;
+  void navigator.serviceWorker
+    ?.getRegistration()
+    .then((r) => r?.update())
+    .catch(() => undefined);
+});
+// Yeni sürüm devreye girince bir kez yenile (ilk kurulumda değil).
+if (navigator.serviceWorker?.controller) {
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
