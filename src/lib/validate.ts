@@ -1,5 +1,5 @@
 import { CATEGORIES, PICKABLE_IMAGES, STORAGES } from '../data/catalog';
-import type { FridgeItem, HistoryEntry, Level, PackageKind, ShoppingItem, Unit } from '../types';
+import type { FridgeItem, HistoryEntry, Level, PackageKind, Plan, ShoppingItem, Unit } from '../types';
 import { UNITS } from './units';
 import { parseDay, toDay } from './dates';
 
@@ -47,6 +47,24 @@ const UNIT_SET = new Set<string>(UNITS);
 const isUnit = (v: unknown): v is Unit => typeof v === 'string' && UNIT_SET.has(v);
 const LEVELS = new Set(['full', 'half', 'low']);
 const KINDS = new Set(['stt', 'tett', 'unknown']);
+
+export function cleanPlan(raw: unknown): Plan | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  if (!isStr(r.id) || !isStr(r.title) || !isStr(r.name) || !isDay(r.day) || !CATS.has(r.category as string)) return undefined;
+  return {
+    id: r.id,
+    day: r.day,
+    title: r.title.slice(0, 60),
+    name: r.name.slice(0, 60),
+    img: cleanImg(r.img, r.category as string),
+    category: r.category as Plan['category'],
+    createdAt: isDay(r.createdAt) ? r.createdAt : toDay(new Date()),
+    ...(isStr(r.itemId) ? { itemId: r.itemId } : {}),
+    ...(isStr(r.catalogId) ? { catalogId: r.catalogId } : {}),
+    ...(isStr(r.recipeId) ? { recipeId: r.recipeId } : {}),
+  };
+}
 
 export function cleanShopping(raw: unknown): ShoppingItem | undefined {
   if (!raw || typeof raw !== 'object') return undefined;

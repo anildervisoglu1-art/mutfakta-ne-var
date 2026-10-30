@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useFridge, type ShoppingAdd } from '../store/useFridge';
+import { PlanForm } from '../components/PlanForm';
 import { MAX_MISSING, suggestRecipes, type Suggestion } from '../lib/suggest';
 import { canFreeze, daysLeft, isBulk, isUrgent, qualityOnly, urgency } from '../lib/freshness';
 import { getCatalogItem } from '../data/catalog';
@@ -71,6 +72,7 @@ export function Cook({ onAdd }: { onAdd: () => void }) {
     .sort((a, b) => daysLeft(a, ref) - daysLeft(b, ref));
   const [openId, setOpenId] = useState<string | null>(null);
   const [cooking, setCooking] = useState<Suggestion | null>(null);
+  const [planningFor, setPlanningFor] = useState<Suggestion | null>(null);
   // İlk tarif yalnızca bir şeyi değerlendiriyorsa kendiliğinden açılır.
   const expandedId = openId ?? (visible[0]?.rescues ? visible[0].recipe.id : null);
 
@@ -215,9 +217,15 @@ export function Cook({ onAdd }: { onAdd: () => void }) {
                         </p>
                       )}
                       {s.recipe.staples && <p className="recipe__missing recipe__staples">{capitalize(s.recipe.staples)} gibi temel malzemeler evde var sayıldı.</p>}
-                      <button type="button" className="btn btn--primary btn--block" onClick={() => setCooking(s)}>
-                        <Icon name="chef" size={18} /> {reusesLeftovers(s) ? 'Bunu yedik' : 'Bunu pişirdim'}
-                      </button>
+                      <div className="btn-row">
+                        {/* İleriye dönük: "Pazar günü bunu yapacağım" (o gün hatırlatılır). */}
+                        <button type="button" className="btn btn--soft" onClick={() => setPlanningFor(s)}>
+                          <Icon name="clock" size={18} /> Planla
+                        </button>
+                        <button type="button" className="btn btn--primary" onClick={() => setCooking(s)}>
+                          <Icon name="chef" size={18} /> {reusesLeftovers(s) ? 'Bunu yedik' : 'Bunu pişirdim'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </li>
@@ -227,6 +235,24 @@ export function Cook({ onAdd }: { onAdd: () => void }) {
         </>
       )}
       <div className="list-end" />
+
+      <Sheet open={!!planningFor} onClose={() => setPlanningFor(null)} label="Planla">
+        {planningFor && (
+          <div>
+            <h2 className="sheet-title">{planningFor.recipe.name}</h2>
+            <p className="sheet-sub">Hangi gün yapacaksın? O gün ana ekranda hatırlatırız.</p>
+            <PlanForm
+              item={planningFor.uses[0]}
+              subject={{ name: planningFor.recipe.name, img: planningFor.recipe.img, category: 'yemek' }}
+              ideas={[]}
+              defaultTitle={planningFor.recipe.name}
+              recipeId={planningFor.recipe.id}
+              today={ref}
+              onSaved={() => setPlanningFor(null)}
+            />
+          </div>
+        )}
+      </Sheet>
 
       <Sheet open={!!cooking} onClose={() => setCooking(null)} label="Pişirdim">
         {cooking && (

@@ -4,6 +4,8 @@ import { canFreeze, daysLeft, finishVerb, isStable, isUrgent, leftLabel, remaini
 import { greeting, longDate, roughDuration } from '../lib/dates';
 import { useToday } from '../lib/useToday';
 import { ReminderCard } from '../components/ReminderCard';
+import { PlansCard } from '../components/PlansCard';
+import { planDayLabel } from '../lib/plans';
 import type { AddPreset } from './AddScreen';
 import { STORAGES, getCatalogItem, searchKey } from '../data/catalog';
 import { FoodRing } from '../components/Food';
@@ -148,6 +150,13 @@ export function Home({ onAdd, onOpenItem, onCook }: { onAdd: (preset?: AddPreset
   const [showLong, setShowLong] = useState(false);
   const lastQuick = useRef(new Map<string, number>());
   const ref = useToday();
+  const plans = useFridge((s) => s.plans);
+  // Satırda en yakın plan günü görünür ("Plan: Pazar").
+  const planByItem = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of plans) if (p.itemId && !m.has(p.itemId) && p.day >= ref) m.set(p.itemId, planDayLabel(p.day, ref));
+    return m;
+  }, [plans, ref]);
   const lead = settings.leadDays;
 
   const sorted = useMemo(() => sortByUrgency(items, ref), [items, ref]);
@@ -234,6 +243,7 @@ export function Home({ onAdd, onOpenItem, onCook }: { onAdd: (preset?: AddPreset
         </div>
         {/* Mutfak boşalsa da takvimdeki eski hatırlatıcılar için uyarı burada görünür. */}
         <ReminderCard today={ref} />
+        <PlansCard today={ref} onOpenItem={onOpenItem} />
         <div className="empty-actions">
           <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => onAdd()}>
             <Icon name="plus" size={20} stroke={2.5} /> İlk ürünü ekle
@@ -335,6 +345,8 @@ export function Home({ onAdd, onOpenItem, onCook }: { onAdd: (preset?: AddPreset
         />
       </Sheet>
 
+      <PlansCard today={ref} onOpenItem={onOpenItem} />
+
       <PriorityHero urgent={urgent} expired={expired} next={sorted.find((i) => urgency(i, lead, ref) === 'fresh' && !isStable(i))} lead={lead} refDay={ref} onCook={onCook} onOpenItem={onOpenItem} />
 
       {items.length > 6 && (
@@ -385,7 +397,7 @@ export function Home({ onAdd, onOpenItem, onCook }: { onAdd: (preset?: AddPreset
               )}
               <ul className="item-list">
                 {list.map((item) => (
-                  <ItemRow key={item.id} item={item} lead={lead} refDay={ref} onOpen={onOpenItem} onQuick={onQuickStable} />
+                  <ItemRow key={item.id} item={item} lead={lead} refDay={ref} onOpen={onOpenItem} onQuick={onQuickStable} plan={planByItem.get(item.id)} />
                 ))}
               </ul>
               {collapsed && (
@@ -578,18 +590,21 @@ const ItemRow = memo(function ItemRow({
   refDay,
   onOpen,
   onQuick,
+  plan,
 }: {
   item: FridgeItem;
   lead: number;
   refDay: string;
   onOpen: (id: string) => void;
   onQuick: (item: FridgeItem, el: HTMLElement) => void;
+  /** Bu ürün için en yakın plan günü ("Pazar"). */
+  plan?: string;
 }) {
   const u = urgency(item, lead, refDay);
   const expired = u === 'expired';
   const w = deductWords(item);
   const level = item.opened && item.level && hasLevel(w.unit) && item.storage !== 'freezer' ? LEVEL_LABEL[item.level] : null;
-  const meta = [item.quantity > 1 ? qtyText(item.quantity, w.unit) : null, STORAGES.find((s) => s.id === item.storage)!.short, item.opened ? (level ? `Açık · ${level}` : 'Açık') : null]
+  const meta = [item.quantity > 1 ? qtyText(item.quantity, w.unit) : null, STORAGES.find((s) => s.id === item.storage)!.short, item.opened ? (level ? `Açık · ${level}` : 'Açık') : null, plan ? `Plan: ${plan}` : null]
     .filter(Boolean)
     .join(' · ');
   const estimated = item.dateSource === 'auto' && !isStable(item);

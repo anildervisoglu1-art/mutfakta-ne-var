@@ -3,17 +3,17 @@ import { migrateItems, useFridge } from '../store/useFridge';
 import { buildCalendar, calendarChanges, calendarSignature, downloadFile } from '../lib/calendar';
 import { notificationsSupported, requestNotifications } from '../lib/notify';
 import { longDate, today } from '../lib/dates';
-import { cleanHistory, cleanItem, cleanList, cleanShopping } from '../lib/validate';
+import { cleanHistory, cleanItem, cleanList, cleanPlan, cleanShopping } from '../lib/validate';
 import { Icon, type IconName } from '../components/Icon';
 import { Segmented, Toggle } from '../components/Stepper';
 import { Sheet } from '../components/Sheet';
 import { toast } from '../components/Toast';
-import type { FridgeItem, HistoryEntry, Settings as SettingsT, ShoppingItem } from '../types';
+import type { FridgeItem, HistoryEntry, Plan, Settings as SettingsT, ShoppingItem } from '../types';
 
 type Confirm =
   | { kind: 'reset' }
   | { kind: 'demo' }
-  | { kind: 'restore'; items: FridgeItem[]; history: HistoryEntry[]; shopping?: ShoppingItem[]; settings?: SettingsT; skipped: number }
+  | { kind: 'restore'; items: FridgeItem[]; history: HistoryEntry[]; shopping?: ShoppingItem[]; plans?: Plan[]; settings?: SettingsT; skipped: number }
   | { kind: 'calendar' }
   | { kind: 'notify-denied' };
 
@@ -22,11 +22,12 @@ export function Settings() {
   const history = useFridge((s) => s.history);
   const settings = useFridge((s) => s.settings);
   const shopping = useFridge((s) => s.shopping);
+  const plans = useFridge((s) => s.plans);
   const { setSettings, loadDemo, replaceAll, reset } = useFridge.getState();
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const snapshot = () => ({ items: useFridge.getState().items, history: useFridge.getState().history, settings: useFridge.getState().settings, shopping: useFridge.getState().shopping });
+  const snapshot = () => ({ items: useFridge.getState().items, history: useFridge.getState().history, settings: useFridge.getState().settings, shopping: useFridge.getState().shopping, plans: useFridge.getState().plans });
 
   const toggleNotifications = async (on: boolean) => {
     if (!on) return setSettings({ notifications: false });
@@ -40,15 +41,15 @@ export function Settings() {
   const exportCalendar = () => {
     const previous = Object.keys(settings.calendar?.sig ?? {});
     // Mutfak boşsa da önceki dosyanın hatırlatıcılarını iptal eden bir dosya hazırlanabilir.
-    if (items.length === 0 && previous.length === 0) return toast({ text: 'Önce mutfağına ürün ekle.' });
-    downloadFile(`mutfak-hatirlaticilar-${today()}.ics`, buildCalendar(items, settings.leadDays, new Date(), history, previous), 'text/calendar');
+    if (items.length === 0 && plans.length === 0 && previous.length === 0) return toast({ text: 'Önce mutfağına ürün ekle.' });
+    downloadFile(`mutfak-hatirlaticilar-${today()}.ics`, buildCalendar(items, settings.leadDays, new Date(), history, previous, plans), 'text/calendar');
     // İndirmek kurulum demek değildir: kullanıcı takvimine eklediğini onaylayana kadar "hazırlandı".
-    setSettings({ calendar: { status: 'prepared', at: today(), lead: settings.leadDays, sig: calendarSignature(items, today()) } });
+    setSettings({ calendar: { status: 'prepared', at: today(), lead: settings.leadDays, sig: calendarSignature(items, today(), plans) } });
     setConfirm({ kind: 'calendar' });
   };
 
   const cal = settings.calendar;
-  const changes = cal ? calendarChanges(items, cal, settings.leadDays, today()) : undefined;
+  const changes = cal ? calendarChanges(items, cal, settings.leadDays, today(), plans) : undefined;
   const calendarTitle = !cal ? 'Takvime hatırlatıcı ekle' : changes && changes.total > 0 ? 'Takvim dosyasını güncelle' : 'Takvim dosyasını yeniden hazırla';
   const calendarSub = !cal
     ? 'Her ürün için uyarı günü sabah 09:00 hatırlatıcısı içeren bir dosya hazırlanır.'
@@ -66,22 +67,23 @@ export function Settings() {
   const backup = () => {
     const { lastNotified: _ignored, ...keep } = settings;
     void _ignored;
-    downloadFile(`mutfak-yedek-${today()}.json`, JSON.stringify({ app: 'dolapta-ne-var', version: 2, items, history, shopping, settings: keep }, null, 2), 'application/json');
+    downloadFile(`mutfak-yedek-${today()}.json`, JSON.stringify({ app: 'dolapta-ne-var', version: 2, items, history, shopping, plans, settings: keep }, null, 2), 'application/json');
     toast({ text: 'Yedek dosyası indirildi', tone: 'good' });
   };
 
   const readFile = async (file: File) => {
     try {
-      const data = JSON.parse(await file.text()) as { app?: string; items?: unknown; history?: unknown; shopping?: unknown; settings?: SettingsT };
+      const data = JSON.parse(await file.text()) as { app?: string; items?: unknown; history?: unknown; shopping?: unknown; plans?: unknown; settings?: SettingsT };
       if (data.app !== 'dolapta-ne-var' || !Array.isArray(data.items)) throw new Error('format');
       const it = cleanList(data.items, cleanItem);
       it.ok = migrateItems(it.ok);
       const hi = cleanList(data.history, cleanHistory);
       const sh = cleanList(data.shopping, cleanShopping);
+      const pl = cleanList(data.plans, cleanPlan);
       if (it.ok.length === 0 && hi.ok.length === 0) throw new Error('empty');
       const lead = Number(data.settings?.leadDays);
       const s = data.settings && [1, 2, 3].includes(lead) ? { leadDays: lead, notifications: settings.notifications } : undefined;
-      setConfirm({ kind: 'restore', items: it.ok, history: hi.ok, shopping: Array.isArray(data.shopping) ? sh.ok : undefined, settings: s, skipped: it.skipped + hi.skipped + sh.skipped });
+      setConfirm({ kind: 'restore', items: it.ok, history: hi.ok, shopping: Array.isArray(data.shopping) ? sh.ok : undefined, plans: Array.isArray(data.plans) ? pl.ok : undefined, settings: s, skipped: it.skipped + hi.skipped + sh.skipped + pl.skipped });
     } catch {
       toast({ text: 'Bu dosya geçerli bir Mutfakta Ne Var? yedeği değil.' });
     }
@@ -119,7 +121,7 @@ export function Settings() {
             <strong>Tarayıcı bildirimi</strong> Yalnızca uygulamayı açtığında, günde en fazla bir kez özet. Uygulama kapalıyken gelmez.
           </li>
           <li>
-            <strong>Takvim hatırlatıcısı</strong> Telefonunun takvimi hatırlatır; uygulama kapalıyken de çalışan tek yol budur.
+            <strong>Takvim hatırlatıcısı</strong> Telefonunun takvimi hatırlatır; uygulama kapalıyken de çalışan tek yol budur. Planların da takvime eklenir.
           </li>
         </ul>
         <SettingRow icon="calendar" title={calendarTitle} sub={calendarSub} onClick={exportCalendar} />
@@ -145,7 +147,7 @@ export function Settings() {
 
       <section className="card">
         <h2 className="card__title">Veriler</h2>
-        <SettingRow icon="download" title="Yedek al" sub="Mutfağını, geçmişini, alışveriş listeni ve ayarlarını dosyaya kaydet" onClick={backup} />
+        <SettingRow icon="download" title="Yedek al" sub="Mutfağını, geçmişini, planlarını, alışveriş listeni ve ayarlarını dosyaya kaydet" onClick={backup} />
         <SettingRow icon="upload" title="Yedekten yükle" sub="Başka cihazdan aldığın yedeği aç" onClick={() => fileRef.current?.click()} />
         <input
           ref={fileRef}
@@ -164,7 +166,7 @@ export function Settings() {
           sub="Uygulamayı örnek ürünlerle gez"
           onClick={() => (items.length ? setConfirm({ kind: 'demo' }) : (loadDemo(), toast({ text: 'Örnek mutfak yüklendi', tone: 'good' })))}
         />
-        <SettingRow icon="trash" title="Her şeyi sil" sub="Ürünler, geçmiş ve alışveriş listesi kalıcı olarak silinir" danger onClick={() => setConfirm({ kind: 'reset' })} />
+        <SettingRow icon="trash" title="Her şeyi sil" sub="Ürünler, geçmiş, planlar ve alışveriş listesi kalıcı olarak silinir" danger onClick={() => setConfirm({ kind: 'reset' })} />
       </section>
 
       <section className="about">
@@ -215,12 +217,12 @@ export function Settings() {
         {confirm?.kind === 'restore' && (
           <ConfirmBody
             title="Yedek yüklensin mi?"
-            text={`Yedekte ${confirm.items.length} ürün, ${confirm.history.length} geçmiş kaydı${confirm.shopping?.length ? ` ve ${confirm.shopping.length} alışveriş satırı` : ''} var. Şu anki ${items.length} ürünün yerini alacak.${confirm.skipped ? ` Bozuk ${confirm.skipped} kayıt atlandı.` : ''}`}
+            text={`Yedekte ${confirm.items.length} ürün, ${confirm.history.length} geçmiş kaydı${confirm.shopping?.length ? `, ${confirm.shopping.length} alışveriş satırı` : ''}${confirm.plans?.length ? `, ${confirm.plans.length} plan` : ''} var. Şu anki ${items.length} ürünün yerini alacak.${confirm.skipped ? ` Bozuk ${confirm.skipped} kayıt atlandı.` : ''}`}
             action="Yükle"
             onCancel={() => setConfirm(null)}
             onConfirm={() => {
               const prev = snapshot();
-              replaceAll({ items: confirm.items, history: confirm.history, shopping: confirm.shopping, settings: confirm.settings });
+              replaceAll({ items: confirm.items, history: confirm.history, shopping: confirm.shopping, plans: confirm.plans, settings: confirm.settings });
               setConfirm(null);
               toast({ text: `${confirm.items.length} ürün geri yüklendi`, tone: 'good', undo: () => replaceAll(prev) });
             }}

@@ -3,10 +3,10 @@ import { persist } from 'zustand/middleware';
 import { today } from '../lib/dates';
 import { canFreeze, canOpen, effectiveUseBy, estimateBase, openedDaysFor, storageAfterOpening, useByAfterThaw, useByIfMovedToFridge, useByInFreezer } from '../lib/freshness';
 import { addDays, diffDays } from '../lib/dates';
-import { cleanHistory, cleanItem, cleanList, cleanShopping } from '../lib/validate';
+import { cleanHistory, cleanItem, cleanList, cleanPlan, cleanShopping } from '../lib/validate';
 import { hasLevel, lowerLevel, unitOf } from '../lib/units';
 import { searchKey } from '../data/catalog';
-import type { DayString, FridgeItem, HistoryEntry, Outcome, PackageKind, Settings, ShoppingItem, Unit } from '../types';
+import type { DayString, FridgeItem, HistoryEntry, Outcome, PackageKind, Plan, Settings, ShoppingItem, Unit } from '../types';
 import { buildDemoItems } from '../data/demo';
 import { getCatalogItem } from '../data/catalog';
 
@@ -82,6 +82,11 @@ interface FridgeState {
   /** Elle girilen son gün. */
   setManualDate: (id: string, day: DayString) => void;
   shopping: ShoppingItem[];
+  /** İleriye dönük planlar ("Pazar: ıspanak yemeği"). */
+  plans: Plan[];
+  addPlan: (input: Omit<Plan, 'id' | 'createdAt'>) => Plan;
+  updatePlan: (id: string, patch: Partial<Plan>) => void;
+  removePlan: (id: string) => void;
   /** Aynı ürün listede (alınmamış) varsa yeni satır açılmaz; o satır döner. `dropped`: yerine geçilen "alındı" satırları. */
   addShopping: (input: NewShopping) => ShoppingAdd;
   /** addShopping'i geri alır: yeni satırı kaldırır, yerine geçtiği "alındı" satırlarını geri koyar. */
@@ -102,7 +107,7 @@ interface FridgeState {
   revert: (historyId: string) => boolean;
   setSettings: (patch: Partial<Settings>) => void;
   loadDemo: () => void;
-  replaceAll: (data: { items: FridgeItem[]; history: HistoryEntry[]; settings?: Settings; shopping?: ShoppingItem[] }) => void;
+  replaceAll: (data: { items: FridgeItem[]; history: HistoryEntry[]; settings?: Settings; shopping?: ShoppingItem[]; plans?: Plan[] }) => void;
   reset: () => void;
 }
 
@@ -131,6 +136,7 @@ export const useFridge = create<FridgeState>()(
       items: [],
       history: [],
       shopping: [],
+      plans: [],
       settings: DEFAULT_SETTINGS,
 
       add: (raw) => {
@@ -247,6 +253,16 @@ export const useFridge = create<FridgeState>()(
 
       removeShopping: (id) => set((s) => ({ shopping: s.shopping.filter((x) => x.id !== id) })),
 
+      addPlan: (input) => {
+        const plan: Plan = { ...input, title: input.title.trim().slice(0, 60), id: uid(), createdAt: today() };
+        set((s) => ({ plans: [...s.plans, plan].sort((a, b) => a.day.localeCompare(b.day)) }));
+        return plan;
+      },
+
+      updatePlan: (id, patch) => set((s) => ({ plans: s.plans.map((p) => (p.id === id ? { ...p, ...patch } : p)).sort((a, b) => a.day.localeCompare(b.day)) })),
+
+      removePlan: (id) => set((s) => ({ plans: s.plans.filter((p) => p.id !== id) })),
+
       finish: (id, outcome, quantity) => {
         const item = get().items.find((i) => i.id === id);
         if (!item) return undefined;
@@ -334,9 +350,9 @@ export const useFridge = create<FridgeState>()(
 
       loadDemo: () => set({ items: buildDemoItems(today()) }),
 
-      replaceAll: ({ items, history, settings, shopping }) => set((s) => ({ items, history, shopping: shopping ?? s.shopping, settings: settings ? { ...s.settings, ...settings } : s.settings })),
+      replaceAll: ({ items, history, settings, shopping, plans }) => set((s) => ({ items, history, shopping: shopping ?? s.shopping, plans: plans ?? s.plans, settings: settings ? { ...s.settings, ...settings } : s.settings })),
 
-      reset: () => set({ items: [], history: [], shopping: [] }),
+      reset: () => set({ items: [], history: [], shopping: [], plans: [] }),
       };
     },
     {
@@ -358,6 +374,7 @@ export const useFridge = create<FridgeState>()(
           items: migrateItems(cleanList(p.items, cleanItem).ok),
           history: cleanList(p.history, cleanHistory).ok,
           shopping: cleanList(p.shopping, cleanShopping).ok,
+          plans: cleanList(p.plans, cleanPlan).ok,
           settings: { ...DEFAULT_SETTINGS, ...(s as Settings), leadDays, ...((s as Settings).calendarHintSeen ? { reminderCardDismissed: true } : {}) },
         };
       },

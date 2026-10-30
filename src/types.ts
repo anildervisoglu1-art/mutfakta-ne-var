@@ -71,6 +71,25 @@ export interface FridgeItem {
   fromRecipe?: boolean;
 }
 
+/**
+ * İleriye dönük plan: "Pazar günü ıspanak yemeği yapacağım". O gün ana ekranda hatırlatılır, takvim dosyasına da girer.
+ * Bir ürüne (itemId) ya da tarife (recipeId) bağlı olabilir; ürün bitse de plan kalır.
+ */
+export interface Plan {
+  id: string;
+  day: DayString;
+  /** Ne yapılacak: "Ispanak yemeği", "Kavurma", "Kahvaltıda ye". */
+  title: string;
+  itemId?: string;
+  catalogId?: string;
+  /** Ürünün adı ve görseli (ürün bittikten sonra da gösterilir). */
+  name: string;
+  img: string;
+  category: CategoryId;
+  recipeId?: string;
+  createdAt: DayString;
+}
+
 /** Alışveriş listesi satırı. */
 export interface ShoppingItem {
   id: string;

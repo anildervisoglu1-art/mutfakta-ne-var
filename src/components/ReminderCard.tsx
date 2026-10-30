@@ -12,6 +12,7 @@ import { Icon } from './Icon';
 export function ReminderCard({ today }: { today: string }) {
   const items = useFridge((s) => s.items);
   const settings = useFridge((s) => s.settings);
+  const plans = useFridge((s) => s.plans);
   const setSettings = useFridge((s) => s.setSettings);
   const [later, setLater] = useState(false);
   const cal = settings.calendar;
@@ -20,7 +21,7 @@ export function ReminderCard({ today }: { today: string }) {
   if (later || (cal?.status !== 'confirmed' && (!settings.legendSeen || items.length === 0))) return null;
 
   if (cal?.status === 'confirmed') {
-    const ch = calendarChanges(items, cal, settings.leadDays, today);
+    const ch = calendarChanges(items, cal, settings.leadDays, today, plans);
     if (ch.total === 0) return null;
     return (
       <Card onClose={() => setLater(true)} closeLabel="Şimdilik gizle">

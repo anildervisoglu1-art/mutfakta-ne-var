@@ -2199,3 +2199,144 @@ button.avatars::after {
   position: absolute;
   inset: -7px -4px;
 }
+
+/* Planlar ("Pazar: ıspanak yemeği") */
+.plans {
+  margin: 0 0 18px;
+  padding: 14px 14px 8px;
+  border-radius: var(--radius-lg, 20px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.plans--due {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand) inset;
+}
+.plans__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.plans__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.plan {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.plan:first-child {
+  border-top: 0;
+}
+.plan__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  text-align: left;
+  color: inherit;
+}
+.plan__main:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.plan__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.plan__text strong {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.plan__text small {
+  color: var(--ink-3);
+}
+.plan__day {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.plan.is-today .plan__day {
+  color: var(--brand);
+}
+.plan.is-late .plan__day {
+  color: var(--soon);
+}
+.plan__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 48px;
+  padding: 0 6px;
+  border-radius: 12px;
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.plan__drop {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+/* Plan formu */
+.plan-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.plan-form__ideas,
+.plan-form__days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.plan-form__date {
+  margin-top: 8px;
+  width: 100%;
+}
+.detail__plan {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface-2);
+}
+.detail__plan-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+.detail__plans {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail__plans li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.detail__plans li span {
+  flex: 1;
+  min-width: 0;
+}
+.detail__plans .icon-btn {
+  width: 44px;
+  height: 44px;
+}

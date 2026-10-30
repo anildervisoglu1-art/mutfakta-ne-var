@@ -1,4 +1,4 @@
-import type { FridgeItem, HistoryEntry } from '../types';
+import type { FridgeItem, HistoryEntry, Plan } from '../types';
 import { addDays, diffDays, toDay } from './dates';
 import { daysLeft, isStable, leadFor, qualityOnly } from './freshness';
 import { UNIT_LABEL, unitOf } from './units';
@@ -35,7 +35,7 @@ function fold(line: string): string {
  * Her ürün için uyarı gününün sabahı 09:00'da hatırlatan takvim dosyası (.ics).
  * Uyarı günü bugünse ve saat 09:00'u geçtiyse hatırlatma birkaç dakika sonraya kurulur.
  */
-export function buildCalendar(items: FridgeItem[], leadDays: number, now = new Date(), history: HistoryEntry[] = [], previousIds: string[] = []): string {
+export function buildCalendar(items: FridgeItem[], leadDays: number, now = new Date(), history: HistoryEntry[] = [], previousIds: string[] = [], plans: Plan[] = []): string {
   const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const ref = toDay(now);
   // Takvim uygulaması aynı UID'li etkinliği daha yüksek SEQUENCE ile güncelleyip iptal edebilsin.
@@ -83,10 +83,38 @@ export function buildCalendar(items: FridgeItem[], leadDays: number, now = new D
     })
     .filter((e): e is string[] => e !== null)
     .flat();
+  // Planlar: plan günü sabah 09:00 ("Bugün: ıspanak yemeği").
+  for (const p of plans) {
+    if (p.day < ref) continue;
+    let time = '090000';
+    if (p.day === ref && now.getHours() >= 9) {
+      const soon = new Date(now.getTime() + 5 * 60_000);
+      if (soon.getDate() !== now.getDate()) continue;
+      time = `${pad(soon.getHours())}${pad(soon.getMinutes())}00`;
+    }
+    const [y, mo, d] = p.day.split('-').map(Number) as [number, number, number];
+    const endAt = new Date(y, mo - 1, d, Number(time.slice(0, 2)), Number(time.slice(2, 4)) + 15);
+    events.push(
+      'BEGIN:VEVENT',
+      `UID:${planUid(p.id)}@dolapta-ne-var`,
+      `SEQUENCE:${seq}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${compact(p.day)}T${time}`,
+      `DTEND:${compact(toDay(endAt))}T${pad(endAt.getHours())}${pad(endAt.getMinutes())}00`,
+      `SUMMARY:${esc(`Plan: ${p.title}`)}`,
+      `DESCRIPTION:${esc(`${p.name} için planın: ${p.title}. Mutfakta Ne Var?`)}`,
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${esc(`Bugün: ${p.title}`)}`,
+      'TRIGGER:PT0M',
+      'END:VALARM',
+      'END:VEVENT',
+    );
+  }
   const live = new Set(items.map((i) => i.id));
   const withEvent = new Set(events.filter((l) => l.startsWith('UID:')).map((l) => l.slice(4).replace('@dolapta-ne-var', '')));
   // İptal edilenler: son 30 günde biten/atılanlar ve önceki dosyada olup bu dosyada etkinliği olmayanlar (silinen, tarihi geçmişe çekilen).
-  const cancelled = [...history.filter((h) => h.item && diffDays(ref, h.date) <= 30 && !live.has(h.item.id)).map((h) => h.item!.id), ...previousIds.filter((id) => !withEvent.has(id))]
+  const cancelled = [...history.filter((h) => h.item && diffDays(ref, h.date) <= 30 && !live.has(h.item.id)).map((h) => h.item!.id), ...previousIds.map(uidKey).filter((id) => !withEvent.has(id))]
     .filter((id, idx, arr) => arr.indexOf(id) === idx)
     .flatMap((id) => ['BEGIN:VEVENT', `UID:${id}@dolapta-ne-var`, `SEQUENCE:${seq}`, `DTSTAMP:${stamp}`, `DTSTART:${compact(ref)}T090000`, 'STATUS:CANCELLED', 'SUMMARY:Mutfakta Ne Var? (iptal)', 'END:VEVENT']);
   events.push(...cancelled);
@@ -105,13 +133,20 @@ export function downloadFile(name: string, content: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** Planın takvim kimliği; imzada "plan:<id>" anahtarıyla tutulur. */
+const planUid = (id: string) => `plan-${id}`;
+const uidKey = (key: string) => (key.startsWith('plan:') ? planUid(key.slice(5)) : key);
+
 /** Takvim dosyasına giren ürünler (bozulmayanlar ve tarihi geçenler hatırlatılmaz). */
 const inCalendar = (items: FridgeItem[], ref: string) => items.filter((i) => daysLeft(i, ref) >= 0 && !isStable(i));
 /** Hatırlatıcıyı etkileyen her şey: son gün, miktar, yer, açıklık. */
 const sigOf = (i: FridgeItem) => `${i.useBy}|${i.quantity}|${i.storage}|${i.opened ? 1 : 0}|${i.name}`;
 
-export function calendarSignature(items: FridgeItem[], ref: string): Record<string, string> {
-  return Object.fromEntries(inCalendar(items, ref).map((i) => [i.id, sigOf(i)]));
+export function calendarSignature(items: FridgeItem[], ref: string, plans: Plan[] = []): Record<string, string> {
+  return {
+    ...Object.fromEntries(inCalendar(items, ref).map((i) => [i.id, sigOf(i)])),
+    ...Object.fromEntries(plans.filter((p) => p.day >= ref).map((p) => [`plan:${p.id}`, `${p.day}|${p.title}`])),
+  };
 }
 
 /**
@@ -123,8 +158,9 @@ export function calendarChanges(
   saved: { sig: Record<string, string>; lead: number },
   leadDays: number,
   ref: string,
+  plans: Plan[] = [],
 ): { added: number; removed: number; changed: number; total: number; leadChanged: boolean } {
-  const now = calendarSignature(items, ref);
+  const now = calendarSignature(items, ref, plans);
   let added = 0;
   let changed = 0;
   let leadChanged = false;
@@ -132,14 +168,16 @@ export function calendarChanges(
   for (const [id, sig] of Object.entries(now)) {
     if (!(id in saved.sig)) added++;
     else if (saved.sig[id] !== sig) changed++;
-    else if (saved.lead !== leadDays && leadFor(byId.get(id)!, saved.lead) !== leadFor(byId.get(id)!, leadDays)) {
+    else if (!id.startsWith('plan:') && saved.lead !== leadDays && leadFor(byId.get(id)!, saved.lead) !== leadFor(byId.get(id)!, leadDays)) {
       // Uyarı süresi değişti; yalnızca hatırlatma günü gerçekten kayan ürünler sayılır.
       changed++;
       leadChanged = true;
     }
   }
   // Bitenler/atılanlar iptal edilmeli.
-  const removed = Object.keys(saved.sig).filter((id) => !byId.has(id)).length;
+  const livePlans = new Set(plans.map((p) => `plan:${p.id}`));
+  // Planın günü geçtiyse takvimde zaten geçmiş bir etkinliktir; silinen plan iptal edilmeli.
+  const removed = Object.keys(saved.sig).filter((id) => (id.startsWith('plan:') ? !livePlans.has(id) && saved.sig[id]!.split('|')[0]! >= ref : !byId.has(id))).length;
   // Hâlâ mutfakta ama artık hatırlatılmayan (tarihi geçmişe çekilen) ürünün eski hatırlatıcısı silinmeli.
   for (const [id, sig] of Object.entries(saved.sig)) {
     const it = byId.get(id);

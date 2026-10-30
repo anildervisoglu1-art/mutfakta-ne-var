@@ -75,7 +75,7 @@ export function App() {
   // Günde bir özet bildirimi: açılışta ve gün değişince/uygulamaya dönülünce.
   useEffect(() => {
     const s = useFridge.getState();
-    void notifyIfNeeded(s.items, s.settings).then((d) => d && useFridge.getState().setSettings({ lastNotified: d }));
+    void notifyIfNeeded(s.items, s.settings, s.plans).then((d) => d && useFridge.getState().setSettings({ lastNotified: d }));
   }, [day]);
 
   useEffect(() => {

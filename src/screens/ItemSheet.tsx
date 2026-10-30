@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { PlanForm } from '../components/PlanForm';
+import { planDayLabel, planIdeas } from '../lib/plans';
 import { MAX_QTY, useFridge } from '../store/useFridge';
 import { getCatalogItem, storageName } from '../data/catalog';
 import {
@@ -90,6 +92,9 @@ function Detail({ item, lead, refDay, close, show }: { item: FridgeItem; lead: n
   const [editDate, setEditDate] = useState(false);
   const [wasteChoice, setWasteChoice] = useState(false);
   const [editing, setEditing] = useState<DateField | null>(null);
+  const [planning, setPlanning] = useState(false);
+  const allPlans = useFridge((s) => s.plans);
+  const myPlans = allPlans.filter((p) => p.itemId === item.id);
   const [dateMode, setDateMode] = useState<'package' | 'manual' | ''>(item.dateSource === 'package' ? 'package' : item.dateSource === 'manual' ? 'manual' : '');
   const [kind, setKind] = useState<PackageKind>(item.packageKind ?? 'unknown');
   // Geri al ya da başka sekmeden gelen değişiklikte seçici kayıtla aynı kalsın (STT sessizce TETT'ye dönmesin).
@@ -649,6 +654,11 @@ function Detail({ item, lead, refDay, close, show }: { item: FridgeItem; lead: n
               <Icon name="snow" /> {many ? `${w.one} dondur` : 'Dondur'}
             </button>
           )}
+          {!expired && !stable && (
+            <button type="button" className={`action ${planning ? 'is-active' : ''}`} aria-expanded={planning} onClick={() => setPlanning((v) => !v)}>
+              <Icon name="clock" /> Planla
+            </button>
+          )}
           {/* Tarihi geçmiş üründe de: paketteki gerçek tarihi girmek ya da yanlış yazılanı düzeltmek mümkün olsun. */}
           {(
             <button type="button" className={`action ${editDate ? 'is-active' : ''}`} aria-expanded={editDate} onClick={() => setEditDate((v) => !v)}>
@@ -662,6 +672,37 @@ function Detail({ item, lead, refDay, close, show }: { item: FridgeItem; lead: n
           )}
         </div>
         {!expired && wasteButtons}
+
+        {planning && (
+          <section className="detail__plan" aria-label="Plan">
+            <h3 className="detail__plan-title">Ne zaman, ne yapacaksın?</h3>
+            <PlanForm item={item} ideas={planIdeas(item)} today={refDay} onSaved={() => setPlanning(false)} />
+          </section>
+        )}
+
+        {myPlans.length > 0 && (
+          <ul className="detail__plans" aria-label="Planların">
+            {myPlans.map((p) => (
+              <li key={p.id}>
+                <Icon name="clock" size={16} />
+                <span>
+                  <strong>{planDayLabel(p.day, refDay)}</strong> · {p.title}
+                </span>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`${p.title} planını sil`}
+                  onClick={() => {
+                    useFridge.getState().removePlan(p.id);
+                    toast({ text: 'Plan silindi', undo: () => useFridge.setState((s) => ({ plans: [...s.plans, p].sort((a, b) => a.day.localeCompare(b.day)) })) });
+                  }}
+                >
+                  <Icon name="x" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="detail__links">
           <button type="button" className="link-btn" onClick={() => addItemToShopping(item)}>
