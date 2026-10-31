@@ -1,4 +1,4 @@
-import { CATEGORIES, PICKABLE_IMAGES, STORAGES } from '../data/catalog';
+import { CATEGORIES, LEGACY_IMG, PICKABLE_IMAGES, STORAGES } from '../data/catalog';
 import type { FridgeItem, HistoryEntry, Level, PackageKind, Plan, ShoppingItem, Unit } from '../types';
 import { UNITS } from './units';
 import { parseDay, toDay } from './dates';
@@ -8,7 +8,8 @@ export const isDay = (v: unknown): v is string => typeof v === 'string' && DAY.t
 const isStr = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
 const CATS = new Set<string>(CATEGORIES.map((c) => c.id));
 const STOR = new Set<string>(STORAGES.map((s) => s.id));
-const IMGS = new Set<string>([...PICKABLE_IMAGES, ...CATEGORIES.map((c) => c.img)]);
+// Eski görseller de geçerli: yüklenince yeni görsele taşınır (bkz. freshImg).
+const IMGS = new Set<string>([...PICKABLE_IMAGES, ...CATEGORIES.map((c) => c.img), ...Object.values(LEGACY_IMG)]);
 /** Yalnızca bilinen görseller; bilinmeyen (ör. "javascript:…") yerine kategori görseli. */
 const cleanImg = (img: unknown, category: string) => (typeof img === 'string' && IMGS.has(img) ? img : CATEGORIES.find((c) => c.id === category)!.img);
 

@@ -117,7 +117,7 @@ describe('guessCatalog — gıda güvenliği turu', () => {
   });
   it('bebek yoğurdu yoğurt görseli alır', () => {
     expect(g('Bebek yoğurdu')?.item?.id).toBe('yogurt');
-    expect(g('Bebek yoğurdu')?.item?.img).toBe('🥣');
+    expect(g('Bebek yoğurdu')?.item?.img).toBe('yogurt');
   });
   it('bal kabağının varsayılan yeri buzdolabı', () => {
     const c = g('Bal kabağı')!.item!;

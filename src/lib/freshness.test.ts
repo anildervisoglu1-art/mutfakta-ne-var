@@ -207,3 +207,19 @@ describe('dondurucu seçeneği', () => {
     expect(freezeWorthIt(item({ catalogId: 'kek', category: 'firin', useBy: addDays(REF, 1) }), REF)).toBe(true);
   });
 });
+
+describe('ürün görselleri', () => {
+  it('benzer ürünlerin görselleri ayrı; eski kayıt yeni görsele taşınır, seçilen görsel korunur', async () => {
+    const { migrateItems } = await import('../store/useFridge');
+    const imgs = ['beyaz-peynir', 'kasar', 'lor', 'labne'].map((id) => getCatalogItem(id)!.img);
+    expect(new Set(imgs).size).toBe(4);
+    const old = item({ catalogId: 'kasar', category: 'sut', img: '🧀' });
+    expect(migrateItems([old])[0]!.img).toBe('kasar');
+    const picked = item({ catalogId: 'kasar', category: 'sut', img: '🧈' });
+    expect(migrateItems([picked])[0]!.img).toBe('🧈');
+  });
+  it('her katalog görselinin dosyası var', () => {
+    const files = new Set(Object.keys(import.meta.glob('/public/food/*.svg')).map((f) => f.slice('/public/food/'.length, -4)));
+    for (const c of CATALOG) expect(files.has(/^[a-z0-9-]+$/.test(c.img) ? c.img : emojiToStem(c.img)), c.id).toBe(true);
+  });
+});

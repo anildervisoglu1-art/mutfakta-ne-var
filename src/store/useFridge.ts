@@ -8,7 +8,7 @@ import { hasLevel, lowerLevel, unitOf } from '../lib/units';
 import { searchKey } from '../data/catalog';
 import type { DayString, FridgeItem, HistoryEntry, Outcome, PackageKind, Plan, Settings, ShoppingItem, Unit } from '../types';
 import { buildDemoItems } from '../data/demo';
-import { getCatalogItem } from '../data/catalog';
+import { getCatalogItem, LEGACY_IMG } from '../data/catalog';
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
@@ -27,7 +27,8 @@ export function migrateItems(items: FridgeItem[]): FridgeItem[] {
   return items.map((i) => {
     if (!i) return i;
     const c = getCatalogItem(i.catalogId);
-    let next = i.storage === 'pantry' && c && c.days.pantry === undefined && c.days.counter !== undefined ? { ...i, storage: 'counter' as const } : i;
+    let next = freshImg(i);
+    if (next.storage === 'pantry' && c && c.days.pantry === undefined && c.days.counter !== undefined) next = { ...next, storage: 'counter' as const };
     if (next.baseUseBy === undefined && !next.opened) next = { ...next, baseUseBy: next.useBy };
     // Eski açık ürünlerde açılma günü yoktu: tarihinden geriye tahmin edilir; böylece sonraki düzenlemeler açık ömrünü kaldırmaz.
     if (next.opened && !next.openedAt) next = { ...next, ...inferOpened(next) };
@@ -35,6 +36,12 @@ export function migrateItems(items: FridgeItem[]): FridgeItem[] {
     if (next.dateSource === 'package' && !next.packageKind) next = { ...next, packageKind: 'unknown' };
     return next;
   });
+}
+
+/** Ürünün eski varsayılan görseli yenisiyle değişir; kullanıcının seçtiği görsel korunur. */
+export function freshImg<T extends { catalogId?: string; img: string }>(x: T): T {
+  const c = getCatalogItem(x.catalogId);
+  return c && x.catalogId && LEGACY_IMG[x.catalogId] === x.img ? { ...x, img: c.img } : x;
 }
 
 /** Açılma günü bilinmeyen açık ürün: "son gün − açık ömrü" (eklenme gününden önce olamaz). */
@@ -350,7 +357,7 @@ export const useFridge = create<FridgeState>()(
 
       loadDemo: () => set({ items: buildDemoItems(today()) }),
 
-      replaceAll: ({ items, history, settings, shopping, plans }) => set((s) => ({ items, history, shopping: shopping ?? s.shopping, plans: plans ?? s.plans, settings: settings ? { ...s.settings, ...settings } : s.settings })),
+      replaceAll: ({ items, history, settings, shopping, plans }) => set((s) => ({ items: items.map(freshImg), history: history.map(freshImg), shopping: shopping?.map(freshImg) ?? s.shopping, plans: plans?.map(freshImg) ?? s.plans, settings: settings ? { ...s.settings, ...settings } : s.settings })),
 
       reset: () => set({ items: [], history: [], shopping: [], plans: [] }),
       };
@@ -372,9 +379,9 @@ export const useFridge = create<FridgeState>()(
         return {
           ...current,
           items: migrateItems(cleanList(p.items, cleanItem).ok),
-          history: cleanList(p.history, cleanHistory).ok,
-          shopping: cleanList(p.shopping, cleanShopping).ok,
-          plans: cleanList(p.plans, cleanPlan).ok,
+          history: cleanList(p.history, cleanHistory).ok.map(freshImg),
+          shopping: cleanList(p.shopping, cleanShopping).ok.map(freshImg),
+          plans: cleanList(p.plans, cleanPlan).ok.map(freshImg),
           settings: { ...DEFAULT_SETTINGS, ...(s as Settings), leadDays, ...((s as Settings).calendarHintSeen ? { reminderCardDismissed: true } : {}) },
         };
       },
