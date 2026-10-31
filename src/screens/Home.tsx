@@ -1,6 +1,6 @@
 import { Fragment, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useFridge } from '../store/useFridge';
-import { canFreeze, daysLeft, finishVerb, isStable, isUrgent, leftLabel, remainingRatio, sortByUrgency, urgency } from '../lib/freshness';
+import { daysLeft, freezeWorthIt, finishVerb, isStable, isUrgent, leftLabel, remainingRatio, sortByUrgency, urgency } from '../lib/freshness';
 import { greeting, longDate, roughDuration } from '../lib/dates';
 import { useToday } from '../lib/useToday';
 import { ReminderCard } from '../components/ReminderCard';
@@ -471,7 +471,7 @@ function PriorityHero({
   const todayCount = urgent.filter((i) => urgency(i, lead, refDay) === 'today').length;
   const first = urgent[0]!;
   // Aynı gün bitmesi gereken birden çok et/yemek: hepsi pişirilemeyebilir, biri dondurulsun.
-  const meats = urgent.filter((i) => (i.category === 'et' || i.category === 'yemek') && daysLeft(i, refDay) <= 1 && canFreeze(i, refDay));
+  const meats = urgent.filter((i) => (i.category === 'et' || i.category === 'yemek') && daysLeft(i, refDay) <= 1 && freezeWorthIt(i, refDay));
   const cookable = urgent.some((i) => ['meyve', 'sebze', 'sut', 'et', 'yemek', 'firin', 'kuru', 'kuruyemis', 'sos'].includes(i.category));
   return (
     <section className={`hero ${todayCount ? 'hero--hot' : 'hero--warm'}`} aria-labelledby="hero-title">

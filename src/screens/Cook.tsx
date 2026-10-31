@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useFridge, type ShoppingAdd } from '../store/useFridge';
 import { PlanForm } from '../components/PlanForm';
 import { MAX_MISSING, suggestRecipes, type Suggestion } from '../lib/suggest';
-import { canFreeze, daysLeft, isBulk, isUrgent, qualityOnly, urgency } from '../lib/freshness';
+import { daysLeft, freezeWorthIt, isBulk, isUrgent, qualityOnly, urgency } from '../lib/freshness';
 import { getCatalogItem } from '../data/catalog';
 import { addDays } from '../lib/dates';
 import { useToday } from '../lib/useToday';
@@ -94,8 +94,8 @@ export function Cook({ onAdd }: { onAdd: () => void }) {
                 <span key={i.id} className={`u-chip when--${urgency(i, settings.leadDays, ref)}`}>
                   <img src={foodImageUrl(i.img)} alt="" width={20} height={20} />
                   {i.name}
-                  {unused && !canFreeze(i, ref) && <small className="u-chip__hint">{finishHint(i, ref)}</small>}
-                  {unused && canFreeze(i, ref) && (
+                  {unused && !freezeWorthIt(i, ref) && <small className="u-chip__hint">{finishHint(i, ref)}</small>}
+                  {unused && freezeWorthIt(i, ref) && (
                     <button
                       type="button"
                       className="u-chip__act"

@@ -1,6 +1,6 @@
 import { RECIPES } from '../data/recipes';
 import { addDays, diffDays, longDate, relativeDay } from './dates';
-import { canFreeze, untilPhrase } from './freshness';
+import { freezeWorthIt, untilPhrase } from './freshness';
 import { recipeKey } from './suggest';
 import type { DayString, FridgeItem, Plan } from '../types';
 
@@ -23,7 +23,7 @@ export function planWarning(day: DayString, item: FridgeItem | undefined, ref: D
   if (!item || item.storage === 'freezer') return undefined;
   if (diffDays(day, item.useBy) <= 0) return undefined;
   const last = planDayLabel(item.useBy, ref);
-  const tip = canFreeze(item, ref) ? ' Günü öne al ya da şimdiden dondur.' : ' Günü öne almayı düşün.';
+  const tip = freezeWorthIt(item, ref) ? ' Günü öne al ya da şimdiden dondur.' : ' Günü öne almayı düşün.';
   const until = untilPhrase(day, ref);
   return `${item.name} ${last === 'Bugün' || last === 'Yarın' ? last.toLocaleLowerCase('tr') : last} son günü; ${/^(Yarına|Bugüne)/.test(until) ? until.toLocaleLowerCase('tr') : until} dayanmayabilir.${tip}`;
 }

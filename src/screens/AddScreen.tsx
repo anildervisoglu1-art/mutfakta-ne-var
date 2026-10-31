@@ -1213,10 +1213,16 @@ function DraftForm({ draft, setDraft, onSubmit, day }: { draft: Draft; setDraft:
               <p className={`pkg-kind__note ${pastStt ? 'is-warn' : ''}`}>{pastStt ? 'Son tüketim tarihi geçmiş; bu ürünü tüketme.' : PACKAGE_NOTE[draft.packageKind]}</p>
             </div>
           )}
-          {c?.tip && (
+          {draft.storage === 'freezer' && c?.freezeTip === false ? (
             <p className="tip">
-              <Icon name="sparkle" size={16} /> {c.tip}
+              <Icon name="sparkle" size={16} /> Donunca dokusu değişebilir; çözdükten sonra pişirerek ya da karıştırarak kullan.
             </p>
+          ) : (
+            c?.tip && (
+              <p className="tip">
+                <Icon name="sparkle" size={16} /> {c.tip}
+              </p>
+            )
           )}
           {!c && <p className="tip">Bu ürünü tanımıyoruz; süre, türüne göre temkinli bir tahmin. Paketinde tarih varsa onu gir.</p>}
         </div>

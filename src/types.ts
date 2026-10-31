@@ -22,6 +22,8 @@ export interface CatalogItem {
   stable?: boolean;
   /** Paketteki tarih bir kalite tarihidir (TETT): kapalıyken geçerse "kontrol et", "at" değil. */
   tett?: boolean;
+  /** Dondurulabilir ama dokusu bozulur (marul, yumurta) ya da gereksiz (tuz): seçenek var, "dondur" önerilmez. */
+  freezeTip?: false;
 }
 
 /** Tarihler yerel gün olarak `YYYY-MM-DD` biçiminde tutulur. */

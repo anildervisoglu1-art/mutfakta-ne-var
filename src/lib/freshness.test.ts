@@ -1,7 +1,7 @@
 import { CATALOG, getCatalogItem } from '../data/catalog';
 import { RECIPES } from '../data/recipes';
 import { addDays, diffDays, relativeDay } from './dates';
-import { canFreeze, suggestUseBy, untilPhrase, urgency, urgencyTitle, useByAfterOpening } from './freshness';
+import { canFreeze, freezeWorthIt, suggestUseBy, untilPhrase, urgency, urgencyTitle, useByAfterOpening } from './freshness';
 import { cleanItem } from './validate';
 import { findExact, guessCatalog, guessCategory, CATALOG as CAT, queryScore, searchKey } from '../data/catalog';
 import { suggestRecipes } from './suggest';
@@ -190,5 +190,20 @@ describe('veri doğrulama ve özel ürünler', () => {
     expect(ids).toContain('menemen');
     expect(ids).not.toContain('tavuk-sote');
     expect(ids).not.toContain('karniyarik');
+  });
+});
+
+describe('dondurucu seçeneği', () => {
+  it('her üründe ve her özel kategoride dondurucu seçeneği var; donunca kısalmaz', () => {
+    for (const c of CATALOG) {
+      expect(c.days.freezer, c.id).toBeGreaterThan(0);
+      expect(c.days.freezer!, c.id).toBeGreaterThanOrEqual(Math.max(...Object.values(c.days)));
+    }
+  });
+  it('dokusu bozulan üründe dondurulabilir ama "dondur" önerilmez', () => {
+    const marul = item({ catalogId: 'marul', category: 'sebze', useBy: addDays(REF, 1) });
+    expect(canFreeze(marul, REF)).toBe(true);
+    expect(freezeWorthIt(marul, REF)).toBe(false);
+    expect(freezeWorthIt(item({ catalogId: 'kek', category: 'firin', useBy: addDays(REF, 1) }), REF)).toBe(true);
   });
 });

@@ -219,6 +219,13 @@ export function canFreeze(item: FridgeItem, ref: DayString = today()): boolean {
   return cat ? cat.days.freezer !== undefined : CUSTOM_DAYS[item.category].freezer !== undefined;
 }
 
+/** "Dondur" önerilecek mi: dondurulabilir ve donunca iyi kalan ürün. */
+export function freezeWorthIt(item: FridgeItem, ref: DayString = today()): boolean {
+  if (!canFreeze(item, ref)) return false;
+  const cat = getCatalogItem(item.catalogId);
+  return cat ? cat.freezeTip !== false : !['icecek', 'sos', 'kuru', 'temel', 'atistirmalik'].includes(item.category);
+}
+
 /** Açılınca kaç gün dayanır: katalogda varsa o, taze özel ürünlerde 3 gün. */
 export function openedDaysFor(item: Pick<FridgeItem, 'catalogId' | 'category'>): number | undefined {
   const cat = getCatalogItem(item.catalogId);
@@ -262,7 +269,7 @@ export function useByAfterThaw(item: FridgeItem, ref: DayString = today()): DayS
 /** Çiğ et/balık gibi 2 gün içinde bitmesi gereken, dondurulabilir ürün: "pişirmeyeceksen dondur" önerisi. */
 export function shouldSuggestFreezing(item: FridgeItem, ref: DayString = today()): boolean {
   const left = daysLeft(item, ref);
-  if (!canFreeze(item, ref) || left < 0) return false;
+  if (!freezeWorthIt(item, ref) || left < 0) return false;
   return item.category === 'et' ? left <= 2 : left <= 1;
 }
 
